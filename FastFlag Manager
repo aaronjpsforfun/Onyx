@@ -1,0 +1,80 @@
+-- Onyx: Mobile FastFlag Bootstrapper
+-- Original code & design by aaronjpsforfun
+
+local OnyxUI = require(script.Parent.OnyxUI)
+local FlagProfiles = require(script.Parent.FlagProfiles)
+local About = require(script.Parent.About)
+
+local HttpService = game:GetService("HttpService")
+local StarterGui = game:GetService("StarterGui")
+
+local FOLDER = "ClientSettings"
+local FILE = FOLDER .. "/ClientAppSettings.json"
+
+local function notify(title, text)
+    StarterGui:SetCore("SendNotification", {
+        Title = title,
+        Text = text,
+        Duration = 5
+    })
+end
+
+local function applyFastFlags(json)
+    local success, flags = pcall(HttpService.JSONDecode, HttpService, json)
+    if not success or type(flags) ~= "table" then
+        notify("Onyx", "❌ Invalid FastFlags JSON.")
+        return false
+    end
+    local applied, skipped = 0, 0
+    for fullKey, rawValue in pairs(flags) do
+        local key = fullKey:gsub("^DFFlag", ""):gsub("^FFlag", ""):gsub("^DFInt", ""):gsub("^FInt", ""):gsub("^DFString", ""):gsub("^FString", "")
+        local ok
+        if fullKey:find("Flag") then
+            ok = pcall(setfflag, key, (rawValue == "True" and "True" or "False"))
+        elseif fullKey:find("Int") then
+            local n = tonumber(rawValue)
+            if n then ok = pcall(setfflag, key, tostring(n)) end
+        elseif fullKey:find("String") then
+            ok = pcall(setfflag, key, rawValue)
+        end
+        if ok then applied = applied + 1 else skipped = skipped + 1 end
+    end
+    notify("Onyx", ("✅ Applied %d flags, skipped %d invalid."):format(applied, skipped))
+    return true
+end
+
+local function main()
+    if not isfolder(FOLDER) or not isfile(FILE) then
+        OnyxUI.showFlagEditor({
+            onSave = function(json)
+                makefolder(FOLDER)
+                writefile(FILE, json)
+                notify("Onyx", "✅ FastFlags saved!")
+                OnyxUI.showNextSteps({
+                    onApply = function()
+                        if applyFastFlags(json) then
+                            wait(2)
+                            game.Players.LocalPlayer:Kick("✅ FastFlags loaded! 🎉")
+                        end
+                    end,
+                    onRejoin = function()
+                        if applyFastFlags(json) then
+                            wait(1)
+                            game:GetService("TeleportService"):Teleport(game.PlaceId)
+                        end
+                    end,
+                })
+            end,
+            onAbout = About.show,
+            onProfiles = FlagProfiles.showManager
+        })
+    else
+        local json = readfile(FILE)
+        if applyFastFlags(json) then
+            wait(2)
+            game.Players.LocalPlayer:Kick("✅ FastFlags loaded! 🎉")
+        end
+    end
+end
+
+return main()
