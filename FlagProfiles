@@ -1,0 +1,53 @@
+-- FlagProfiles: FastFlag profile management for Onyx
+
+local HttpService = game:GetService("HttpService")
+local StarterGui = game:GetService("StarterGui")
+
+local PROFILE_DIR = "OnyxProfiles"
+
+local FlagProfiles = {}
+
+function FlagProfiles.list()
+    if not isfolder(PROFILE_DIR) then return {} end
+    local files = listfiles(PROFILE_DIR)
+    local profiles = {}
+    for _, f in ipairs(files) do
+        if f:match("%.json$") then
+            table.insert(profiles, f:match("([^/]+)%.json$"))
+        end
+    end
+    return profiles
+end
+
+function FlagProfiles.load(name)
+    local path = PROFILE_DIR.."/"..name..".json"
+    if isfile(path) then
+        return readfile(path)
+    end
+end
+
+function FlagProfiles.save(name, json)
+    if not isfolder(PROFILE_DIR) then makefolder(PROFILE_DIR) end
+    writefile(PROFILE_DIR.."/"..name..".json", json)
+    StarterGui:SetCore("SendNotification", {
+        Title = "Onyx",
+        Text = "Profile '"..name.."' saved!",
+        Duration = 4
+    })
+end
+
+function FlagProfiles.showManager()
+    -- Simple text-based UI for now (could expand with more GUI later)
+    local profiles = FlagProfiles.list()
+    print("=== Onyx Flag Profiles ===")
+    for _, name in ipairs(profiles) do
+        print("- "..name)
+    end
+    StarterGui:SetCore("SendNotification", {
+        Title = "Onyx",
+        Text = "Profile list printed to output.",
+        Duration = 4
+    })
+end
+
+return FlagProfiles
