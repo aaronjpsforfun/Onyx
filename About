@@ -1,0 +1,15 @@
+-- About dialog for Onyx
+
+local StarterGui = game:GetService("StarterGui")
+
+local function show()
+    StarterGui:SetCore("SendNotification", {
+        Title = "ℹ️ About Onyx",
+        Text = "Onyx: Mobile FastFlag Bootstrapper\nBy aaronjpsforfun\nOriginal UI & logic, inspired by Bloxstrap.\nMIT License.",
+        Duration = 7
+    })
+end
+
+return {
+    show = show
+}
